@@ -1,13 +1,8 @@
+#!/usr/bin/env python
 from __future__ import print_function
 import json
 import subprocess
-
-filename = ''
-command = '/usr/local/bin/ffprobe -show_frames -print_format json {filename}'.format(filename=filename)
-response_json = subprocess.check_output(command, shell=True, stderr=None)
-
-frames = json.loads(response_json)["frames"]
-
+import argparse
 
 class BFrame(object):
     def __repr__(self, *args, **kwargs):
@@ -57,7 +52,25 @@ class GOP(object):
         
         gtype = 'CLOSED' if self.closed else 'OPEN'
         
-        return 'GOP: {frames} {count} {gtype}'.format(frames=frames_repr, count=len(self.frames), gtype=gtype)
+        return 'GOP: {frames} {count} {gtype}'.format(frames=frames_repr, 
+                                                      count=len(self.frames), 
+                                                      gtype=gtype)
+
+parser = argparse.ArgumentParser(description='Dump GOP structure of video file')
+parser.add_argument('filename', help='video file to parse')
+parser.add_argument('-e', '--ffprobe-exec', dest='ffprobe_exec', 
+                    help='ffprobe executable. (default: %(default)s)',
+                    default='ffprobe')
+
+args = parser.parse_args()
+
+command = '"{ffexec}" -show_frames -print_format json "{filename}"'\
+                .format(ffexec=args.ffprobe_exec, filename=args.filename)
+                
+response_json = subprocess.check_output(command, shell=True, stderr=None)
+
+frames = json.loads(response_json)["frames"]
+
 
 gop_count = 0
 gops = []
